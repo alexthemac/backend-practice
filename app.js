@@ -1,6 +1,7 @@
 const express = require("express");
 const morgan = require("morgan");
 const PORT = 3001;
+const fs = require('fs');
 
 const app = express();
 app.use(morgan('dev'));
@@ -37,3 +38,30 @@ app.get('/recipes/details/:recipeName', (req, res) => {
 
   res.status(200).json({details});
 })
+
+app.post('/recipes', function (req, res) {
+
+
+  const update = {
+    "name": "butteredBagel", 
+      "ingredients": [
+        "1 bagel", 
+        "butter"
+      ], 
+    "instructions": [
+      "cut the bagel", 
+      "spread butter on bagel"
+    ] 
+  } 
+
+  const updateString = JSON.stringify(update);
+
+  fs.writeFile('./data.json', updateString);
+
+
+
+
+  res.send('Got a POST request')
+})
+
+
