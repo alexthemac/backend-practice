@@ -125,6 +125,7 @@ app.post('/recipes', (req, res) => {
       let status = 201; 
       let newInfo = req.body;
 
+      //check if recipe already exists
       dataJSON.recipes.forEach((recipe) => {
         if (recipe.name === newInfo.name) {
           body = { "error": "Recipe already exists" };
@@ -133,6 +134,7 @@ app.post('/recipes', (req, res) => {
         }
       });
 
+      //if recipe does not exist, add to file
       if (status !== 400) {
         dataJSON.recipes.push(newInfo);
         fs.writeFile('./data.json', JSON.stringify(dataJSON, null, 2), (err) => {
@@ -145,64 +147,42 @@ app.post('/recipes', (req, res) => {
       }
     }
   });
-
-
-  // const update = {
-  //   "name": "butteredBagel", 
-  //     "ingredients": [
-  //       "1 bagel", 
-  //       "butter"
-  //     ], 
-  //   "instructions": [
-  //     "cut the bagel", 
-  //     "spread butter on bagel"
-  //   ] 
-  // } 
-
-  // const updateString = JSON.stringify(update);
-
-
-  // dataJSON.recipes.push(req.body);
-
-  // console.log(dataJSON);
-
-
-  // console.log("REQ BODY:", req.body);
-
-  // fs.writeFileSync('./data.json', JSON.stringify(dataJSON));
-
-
-
-  // res.send(dataJSON)
 });
 
 app.put('/recipes', (req, res) => {
-  const newInfo = req.body;
-  let status = 404; 
-  let body = { "error": "Recipe does not exist" };
 
-  console.log("NEW INFO!!!:", newInfo);
-  // const newInfoName = req.body
+  fs.readFile('./data.json', 'utf-8', (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      const dataJSON = JSON.parse(data);
+      let status = 404; 
+      let body = { "error": "Recipe does not exist" };
+      let newInfo = req.body;
 
-  dataJSON.recipes.forEach((recipe, index) => {
+      //check if recipe already exists
+      dataJSON.recipes.forEach((recipe, index) => {
+        if (recipe.name === newInfo.name) {
+          dataJSON.recipes[index] = newInfo;
+          body = dataJSON;
+          status = 204;
+        }
+      });
 
-    // console.log(recipe.name);
-    if (recipe.name === newInfo.name) {
-      // console.log(recipe.name, index);
-      dataJSON.recipes[index] = newInfo;
-      body = dataJSON;
-      status = 200;
+      //if exists, modify the entry
+      if (status === 204) {
+        fs.writeFile('./data.json', JSON.stringify(dataJSON, null, 2), (err) => {
+          if (err) {
+            console.log(err);
+          } else {
+            res.status(status).end();
+          }
+        });
+      } else {
+        res.status(status).json(body);
+      }
     }
-  })
-
-
-
-  // fs.writeFileSync('./data.json', JSON.stringify(dataJSON));
-  
-  
-  res.status(status).send(body);
-
-
+  });
 })
 
 
