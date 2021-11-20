@@ -64,40 +64,87 @@ app.use(express.json());
   // ]
 // }
 
-let dataJSON = require('./data.json');
+// let dataJSON = require('./data.json');
 
 app.listen(PORT, () => {
   console.log(`Server running on ${PORT}`);
-
 });
 
 app.get('/recipes', (req, res) => {
-  let recipeNames = dataJSON.recipes.map((recipe) => {
-    return recipe.name;
-  })  
-  res.json({ recipesNames: recipeNames } );
+
+  fs.readFile('./data.json', 'utf-8', (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      const dataJSON = JSON.parse(data);
+
+      let recipeNames = dataJSON.recipes.map((recipe) => {
+        return recipe.name;
+      })
+      
+      res.status(200).json({ recipesNames: recipeNames });
+    }
+  });
 })
+
 
 app.get('/recipes/details/:recipeName', (req, res) => {
 
-  const { recipeName } = req.params;
-
-  let details = { 
-    ingredients: [],
-    numSteps: 0 
-  }
-
-  dataJSON.recipes.forEach((recipe, index) => {
-    if (recipe.name === recipeName) {
-      details.ingredients = recipe.ingredients; 
-      details.numSteps = recipe.instructions.length
+  fs.readFile('./data.json', 'utf-8', (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      const { recipeName } = req.params;
+      const dataJSON = JSON.parse(data);
+      let status = 200; 
+      let body = {};
+      let details = { 
+        ingredients: [],
+        numSteps: 0 
+      };
+    
+      dataJSON.recipes.forEach((recipe, index) => {
+        if (recipe.name === recipeName) {
+          details.ingredients = recipe.ingredients; 
+          details.numSteps = recipe.instructions.length;
+          body = { details };
+        }
+      })
+      res.status(status).json(body);
     }
-  })
-
-  res.status(200).json({details});
+  });
 })
 
 app.post('/recipes', (req, res) => {
+
+  fs.readFile('./data.json', 'utf-8', (err, data) => {
+    if (err) {
+      console.log(err);
+    } else {
+      const dataJSON = JSON.parse(data);
+      let status = 201; 
+      let newInfo = req.body;
+
+      dataJSON.recipes.forEach((recipe) => {
+        if (recipe.name === newInfo.name) {
+          body = { "error": "Recipe already exists" };
+          status = 400;
+          res.status(status).json(body);
+        }
+      });
+
+      if (status !== 400) {
+        dataJSON.recipes.push(newInfo);
+        fs.writeFile('./data.json', JSON.stringify(dataJSON, null, 2), (err) => {
+          if (err) {
+            console.log(err);
+          } else {
+            res.status(status).end();
+          }
+        });
+      }
+    }
+  });
 
 
   // const update = {
@@ -115,19 +162,19 @@ app.post('/recipes', (req, res) => {
   // const updateString = JSON.stringify(update);
 
 
-  dataJSON.recipes.push(req.body);
+  // dataJSON.recipes.push(req.body);
 
   // console.log(dataJSON);
 
 
   // console.log("REQ BODY:", req.body);
 
-  fs.writeFileSync('./data.json', JSON.stringify(dataJSON));
+  // fs.writeFileSync('./data.json', JSON.stringify(dataJSON));
 
 
 
-  res.send(dataJSON)
-})
+  // res.send(dataJSON)
+});
 
 app.put('/recipes', (req, res) => {
   const newInfo = req.body;
